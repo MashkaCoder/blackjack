@@ -17,6 +17,11 @@ def game() -> None:
             exit()
         money -= 1000
         bet = get_bet(money)
+        deck = get_deck()
+        player_hand = [deck.pop(), deck.pop()]
+        dealer_hand = [deck.pop(), deck.pop()]
+        display_hand(player_hand, dealer_hand, False)
+        print("Bet: ", bet)
 
 
 def get_bet(max_bet: int) -> int:
@@ -39,6 +44,59 @@ def get_bet(max_bet: int) -> int:
         else:
             return bet
 
+
+def get_deck() -> list:
+    deck = []
+    for suit in (HEARTS, DIAMONDS, SPADES, CLUBS):
+        for rank in range(2, 11):
+            deck.append((rank, suit))
+        for rank in ('J', 'Q', 'K', 'A'):
+            deck.append((rank, suit))
+    random.shuffle(deck)
+    return deck
+
+
+def display_hand(dealer: list, player: list, suit: bool) -> None:
+    if not suit:
+        print("DEALER: ???")
+        display_card([BACKSIDE] + dealer[1:])
+    else:
+        print("DEALER: ", count_value(dealer))
+        display_card(dealer)
+    print("\nPLAYER:", count_value(player))
+    display_card(player)
+
+
+def display_card(cards: list) -> None:
+    rows = ['', '', '', '']
+    for card in cards:
+        rows[0] += ' ___  '
+        if card == BACKSIDE:
+            rows[1] += '|## | '
+            rows[2] += '|###| '
+            rows[3] += '|_##| '
+        else:
+            rows[1] += '|{} | '.format(str(card[0]).ljust(2))
+            rows[2] += '| {} | '.format(card[1])
+            rows[3] += '|_{}| '.format(str(card[0]).rjust(2, "_"))
+    for row in rows:
+        print(row)
+
+
+def count_value(cards: list) -> int:
+    value = 0
+    count_aces = 0
+    for card in cards:
+        if card[0] in ('J', 'Q', 'K'):
+            value += 10
+        elif card[0] == 'A':
+            count_aces += 1
+        else:
+            value += card[0]
+    value += count_aces
+    if value + 10 <= 21:
+        value += 10
+    return value
 
 
 def print_rules() -> None:
