@@ -15,13 +15,46 @@ def game() -> None:
         if money <= 0:
             print("""You're broke.\nThank's for playing!""")
             exit()
-        money -= 1000
         bet = get_bet(money)
         deck = get_deck()
-        player_hand = [deck.pop(), deck.pop()]
         dealer_hand = [deck.pop(), deck.pop()]
-        display_hand(player_hand, dealer_hand, False)
+        player_hand = [deck.pop(), deck.pop()]
         print("Bet: ", bet)
+        while True:
+            display_hand(player_hand, dealer_hand, False)
+            if count_value(player_hand) > 21:
+                break
+            move = get_move(player_hand, money)
+            if move == 'D':
+                add_bet = get_bet(money-bet)
+                bet += add_bet
+                print("You raised the bet by {}".format(add_bet))
+                print("Bet:", bet)
+            if move in ('H', 'D'):
+                card = deck.pop()
+                print("You took a {} of {}".format(card[0], card[1]))
+                player_hand.append(card)
+            if move == 'S':
+                break
+        if count_value(dealer_hand) <= 21:
+            while count_value(dealer_hand) < 17:
+                print("Dealer hits...")
+                dealer_hand.append(deck.pop())
+                display_hand(player_hand, dealer_hand, False)
+                if count_value(dealer_hand) > 21:
+                    break
+        display_hand(player_hand, dealer_hand, True)
+        player_value = count_value(player_hand)
+        dealer_value = count_value(dealer_hand)
+        if dealer_value > 21 or (player_value > dealer_value and player_value <= 21):
+            print("You won {}$!".format(bet))
+            money += bet
+        elif player_value < dealer_value or player_value > 21:
+            print("You've lost")
+            money -= bet
+        elif player_value == dealer_value:
+            print("It's a tie, the bet returned to you")
+        print("Your money: {}$".format(money))
 
 
 def get_bet(max_bet: int) -> int:
@@ -56,7 +89,7 @@ def get_deck() -> list:
     return deck
 
 
-def display_hand(dealer: list, player: list, suit: bool) -> None:
+def display_hand(player: list, dealer: list, suit: bool) -> None:
     if not suit:
         print("DEALER: ???")
         display_card([BACKSIDE] + dealer[1:])
@@ -94,9 +127,22 @@ def count_value(cards: list) -> int:
         else:
             value += card[0]
     value += count_aces
-    if value + 10 <= 21:
+    if count_aces and value + 10 <= 21:
         value += 10
     return value
+
+
+def get_move(player_hand: list, money: int) -> str:
+    while True:
+        moves = ['(S)tand', '(H)it']
+        if len(player_hand) == 2 and money > 0:
+            moves.append('(D)oudle down')
+        print(moves)
+        move = input('>').upper()
+        if move in ('S', 'H'):
+            return move
+        elif move == 'D' and '(D)oudle down' in moves:
+            return move
 
 
 def print_rules() -> None:
@@ -115,7 +161,10 @@ def print_rules() -> None:
 
 def main():
     print_rules()
-    game()
+    try:
+        game()
+    except KeyboardInterrupt as e:
+        print("Something wrong. Try again.")
 
 
 if __name__ == "__main__":
